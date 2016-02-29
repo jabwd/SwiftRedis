@@ -1,4 +1,4 @@
-import RedisC
+import hiredis
 
 class Redis
 {
