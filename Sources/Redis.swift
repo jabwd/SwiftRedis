@@ -38,6 +38,10 @@ class Redis
 		// TODO: Escape the value / key somehow?
 		let reply = UnsafeMutablePointer<redisReply>(setCmd(context!, value, key, value.characters.count))
 
+		defer {
+			reply.destroy()
+		}
+
 		let status = reply.memory.type
 		if( status == REDIS_REPLY_STATUS ) {
 			//print("Status response \(String.fromCString(reply.memory.str))")
