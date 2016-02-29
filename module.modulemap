@@ -1,0 +1,5 @@
+module RedisC [system] {
+    header "/usr/local/include/hiredis/hiredis.h"
+    link "hiredis"
+    export *
+}
