@@ -66,6 +66,11 @@ class Redis
 		let reply = UnsafeMutablePointer<redisReply>(redisCmd(context!, "GET \(key)"))
 		let type  = reply.memory.type
 
+		// Don't leak.
+		defer {
+			reply.destroy()
+		}
+
 		switch(type) {
 			case REDIS_REPLY_STRING:
 				return String.fromCString(reply.memory.str)
