@@ -3,41 +3,29 @@ import hiredis
 class Redis
 {
 	private var context: UnsafeMutablePointer<redisContext>? = nil
-	init()
-	{
+	init?(host: String = "127.0.0.1", port: Int32 = 6379) {
+		context = UnsafeMutablePointer<redisContext>(redisConnect(host, port))
 
+		// In case the connection fails, simply return a nil object.
+		if context == nil {
+			return nil
+		}
 	}
 
 	deinit {
-		if( context != nil ) {
-			redisFree(context!)
-			context!.destroy()
+		if let context = context {
+			redisFree(context)
+			context.destroy()
 		}
 	}
 
-	func connect(host: String = "127.0.0.1", port: Int32 = 6379)
-	{
-		context = UnsafeMutablePointer<redisContext>(redisConnect(host, port))
-	}
-
-	func disconnect()
-	{
-		if( context == nil ) {
-			return
-		}
-		redisFree(context!)
-		context = nil
-	}
-
-	func set(value: String, key: String) -> Bool
-	{
-		if( context == nil ) {
-			return false
-		}
+	func set(value: String, key: String) -> Bool {
+		guard let context = context else { return false }
 
 		// TODO: Escape the value / key somehow?
-		let reply = UnsafeMutablePointer<redisReply>(setCmd(context!, value, key, value.characters.count))
+		let reply = UnsafeMutablePointer<redisReply>(setCmd(context, value, key, value.characters.count))
 
+		// Cleanup
 		defer {
 			reply.destroy()
 		}
@@ -61,13 +49,10 @@ class Redis
 		return false
 	}
 
-	func get(key: String) -> String?
-	{
-		if( context == nil ) {
-			return nil
-		}
+	func get(key: String) -> String? {
+		guard let context = context else { return nil }
 
-		let reply = UnsafeMutablePointer<redisReply>(redisCmd(context!, "GET \(key)"))
+		let reply = UnsafeMutablePointer<redisReply>(redisCmd(context, "GET \(key)"))
 		let type  = reply.memory.type
 
 		// Don't leak.
